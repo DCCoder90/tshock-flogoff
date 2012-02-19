@@ -42,6 +42,7 @@ namespace Flogoff
         private void flogoff(CommandArgs args)
         {
             TSPlayer player = args.Player;
+            player.SetBuff(10,72000,true);
             Log.Info(string.Format("{0} did a fake logoff.", player.Name));
             TSPlayer.All.SendMessage(string.Format("{0} left", player.Name), Color.Yellow);
         }
