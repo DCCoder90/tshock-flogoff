@@ -41,7 +41,8 @@ namespace Flogoff
         public override void Initialize()
         {
             Hooks.ServerHooks.Chat += OnChat;
-            Commands.ChatCommands.Add(new Command("kick", flogoff, "flogoff"));
+            Commands.ChatCommands.Add(new Command("flogoff", flogon, "flogon"));
+            Commands.ChatCommands.Add(new Command("flogoff", flogoff, "flogoff"));
         }
 
 
@@ -108,6 +109,15 @@ namespace Flogoff
             offline.Add(player.Name);
             player.SetBuff(10,72000,true);
             TSPlayer.All.SendMessage(string.Format("{0} left", player.Name), Color.Yellow);
+        }
+
+        private void flogon(CommandArgs args)
+        {
+            TSPlayer player = args.Player;
+            player.mute = false;
+            offline.Remove(player.Name);
+            player.SetBuff(0, 0, true);
+            TSPlayer.All.SendMessage(string.Format("{0} has joined", player.Name), Color.Yellow);
         }
     }
 }
