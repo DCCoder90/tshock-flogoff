@@ -107,7 +107,6 @@ namespace Flogoff
             player.mute = true; //Just for saftey ;)
             offline.Add(player.Name);
             player.SetBuff(10,72000,true);
-            Log.Info(string.Format("{0} did a fake logoff.", player.Name));
             TSPlayer.All.SendMessage(string.Format("{0} left", player.Name), Color.Yellow);
         }
     }
