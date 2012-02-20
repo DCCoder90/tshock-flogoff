@@ -1,8 +1,9 @@
-﻿using System;
-using System.ComponentModel;
+﻿﻿using System;
 using System.Collections.Generic;
-using TShockAPI;
+using System.ComponentModel;
+using System.IO;
 using Terraria;
+using TShockAPI;
 
 namespace Flogoff
 {
@@ -10,7 +11,7 @@ namespace Flogoff
 
     public class FLogoff : TerrariaPlugin
     {
-        private List<string> offline = new List<string>();
+        protected List<string> offline = new List<string>();
 
         public override Version Version
         {
@@ -43,7 +44,7 @@ namespace Flogoff
             Hooks.ServerHooks.Chat += OnChat;
             Commands.ChatCommands.Add(new Command("flogoff", flogon, "flogon"));
             Commands.ChatCommands.Add(new Command("flogoff", flogoff, "flogoff"));
-
+            /* There is an error here somewhere...
             bool perm = false;
 
             foreach (Group group in TShock.Groups.groups)
@@ -58,7 +59,7 @@ namespace Flogoff
             List<string> permlist = new List<string>();
             if (!perm)
                 permlist.Add("flogoff");
-            TShock.Groups.AddPermissions("admin", permlist);
+            TShock.Groups.AddPermissions("admin", permlist);*/
         }
 
 
@@ -72,7 +73,7 @@ namespace Flogoff
         }
 
 
-        private void OnChat(messageBuffer msg, int who, string message, HandledEventArgs args)
+        protected void OnChat(messageBuffer msg, int who, string message, HandledEventArgs args)
         {
             if (args.Handled)
             {
@@ -81,9 +82,8 @@ namespace Flogoff
 
             TSPlayer player = TShock.Players[msg.whoAmI];
 
-            if (player == null)
+            if (message.Substring(0, 3) != "/tp" && message.Substring(0, 7) != "/playing")
             {
-                args.Handled = true;
                 return;
             }
 
@@ -100,7 +100,6 @@ namespace Flogoff
 
                     if (result == null)
                     {
-                        args.Handled = false;
                         return;
                     }
                     else
@@ -109,11 +108,12 @@ namespace Flogoff
                         player.SendMessage("Invalid player!", Color.Red);
                         return;
                     }
-                }else if(message.Substring(1,8)=="playing")
+                }
+                if(message.Substring(1,7)=="playing")
                 {
                     args.Handled = true;
                     string response = TShock.Utils.GetPlayers();
-                    string[] players = message.Split();
+                    string[] players = response.Split();
                     int i = 0;
                     foreach(string playername in players){
                         string result = offline.Find(delegate(string off) { return off == playername; });
@@ -126,15 +126,12 @@ namespace Flogoff
                     response = String.Join(" ",players);
                     player.SendMessage(string.Format("Current players: {0}.", response), 255, 240, 20);
                 }
-                else
-                {
-                    args.Handled = false;
-                    return;
-                }
+                
+                return;
             }
         }
 
-        private void flogoff(CommandArgs args)
+        protected void flogoff(CommandArgs args)
         {
             TSPlayer player = args.Player;
             player.mute = true; //Just for saftey ;)
@@ -143,12 +140,11 @@ namespace Flogoff
             TSPlayer.All.SendMessage(string.Format("{0} left", player.Name), Color.Yellow);
         }
 
-        private void flogon(CommandArgs args)
+        protected void flogon(CommandArgs args)
         {
             TSPlayer player = args.Player;
             player.mute = false;
             offline.Remove(player.Name);
-            player.SetBuff(0, 0, true);
             TSPlayer.All.SendMessage(string.Format("{0} has joined", player.Name), Color.Yellow);
         }
     }
