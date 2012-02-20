@@ -14,7 +14,7 @@ namespace Flogoff
 
         public override Version Version
         {
-            get { return new Version("1.0.2"); }
+            get { return new Version("1.0.8"); }
         }
 
         public override string Name
