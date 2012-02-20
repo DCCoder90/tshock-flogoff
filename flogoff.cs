@@ -44,22 +44,6 @@ namespace Flogoff
             Hooks.ServerHooks.Chat += OnChat;
             Commands.ChatCommands.Add(new Command("flogoff", flogon, "flogon"));
             Commands.ChatCommands.Add(new Command("flogoff", flogoff, "flogoff"));
-            /* There is an error here somewhere...
-            bool perm = false;
-
-            foreach (Group group in TShock.Groups.groups)
-            {
-                if (group.Name != "superadmin")
-                {
-                    if (group.HasPermission("flogoff"))
-                        perm = true;
-                }
-            }
-
-            List<string> permlist = new List<string>();
-            if (!perm)
-                permlist.Add("flogoff");
-            TShock.Groups.AddPermissions("admin", permlist);*/
         }
 
 
