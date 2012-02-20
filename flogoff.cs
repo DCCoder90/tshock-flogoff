@@ -82,12 +82,7 @@ namespace Flogoff
 
             TSPlayer player = TShock.Players[msg.whoAmI];
 
-            if (message.Substring(0, 3) != "/tp" && message.Substring(0, 7) != "/playing")
-            {
-                return;
-            }
-
-            if (message.StartsWith("/"))
+            if (message.StartsWith("/tp") || message.StartsWith("/playing"))
             {
                 if (message.Substring(1, 3) == "tp")
                 {
@@ -96,26 +91,27 @@ namespace Flogoff
                     string cmd = words[0].Substring(1);
                     string tpto = words[1];
 
-                    string result = offline.Find(delegate(string off) { return off == tpto; });
+                    string result = offline.Find(delegate(string off) {return off == tpto; });
 
-                    if (result == null)
-                    {
-                        return;
-                    }
-                    else
+                    if (result != null&&result!="")
                     {
                         args.Handled = true;
                         player.SendMessage("Invalid player!", Color.Red);
                         return;
                     }
+                    else
+                    {
+                        return;
+                    }
                 }
-                if(message.Substring(1,7)=="playing")
+                if (message.Substring(1, 7) == "playing")
                 {
                     args.Handled = true;
                     string response = TShock.Utils.GetPlayers();
                     string[] players = response.Split();
                     int i = 0;
-                    foreach(string playername in players){
+                    foreach (string playername in players)
+                    {
                         string result = offline.Find(delegate(string off) { return off == playername; });
                         if (result != null)
                         {
@@ -123,10 +119,12 @@ namespace Flogoff
                         }
                         i++;
                     }
-                    response = String.Join(" ",players);
+                    response = String.Join(" ", players);
                     player.SendMessage(string.Format("Current players: {0}.", response), 255, 240, 20);
                 }
-                
+            }
+            else
+            {
                 return;
             }
         }
