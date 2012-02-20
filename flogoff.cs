@@ -109,6 +109,24 @@ namespace Flogoff
                         player.SendMessage("Invalid player!", Color.Red);
                         return;
                     }
+                }else if(message.Substring(1,7)=="playing")
+                {
+                    args.Handled = true;
+                    string response = TShock.Utils.GetPlayers();
+                    string[] players = message.Split();
+                    int i = 0;
+                    foreach(string playername in players){
+                        string result = offline.Find(delegate(string off) { return off == playername; });
+
+                        if (result != null)
+                        {
+                            //remove player from array
+                            players[i] = "";
+                        }
+                        i++;
+                    }
+                    response = String.Join(" ",players);
+                    player.SendMessage(string.Format("Current players: {0}.", response), 255, 240, 20);
                 }
                 else
                 {
