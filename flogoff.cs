@@ -1,15 +1,18 @@
-﻿﻿using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using Terraria;
 using TShockAPI;
 using Hooks;
+using Microsoft.Xna.Framework;
+using OTAPI;
+using Terraria.Localization;
+using TerrariaApi.Server;
 
 namespace Flogoff
 {
-    [APIVersion(1, 11)]
-
+    [ApiVersion(2,1)]
     public class FLogoff : TerrariaPlugin
     {
         protected List<string> offline = new List<string>();
@@ -44,18 +47,17 @@ namespace Flogoff
         public override void Initialize()
         {
             Hooks.ServerHooks.Chat += OnChat;
-            NetHooks.SendData += OnSendData;
-            Commands.ChatCommands.Add(new Command("flogoff", flogon, "flogon"));
-            Commands.ChatCommands.Add(new Command("flogoff", flogoff, "flogoff"));
+            OTAPI.Hooks.Net.SendData += OnSendData;
+            Commands.ChatCommands.Add(new Command("flogoff", FlogOn, "flogon"));
+            Commands.ChatCommands.Add(new Command("flogoff", FlogOff, "flogoff"));
         }
-
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
+                OTAPI.Hooks.Net.SendData -= OnSendData;
                 Hooks.ServerHooks.Chat -= OnChat;
-                NetHooks.SendData -= OnSendData;
             }
             base.Dispose(disposing);
         }
@@ -72,7 +74,7 @@ namespace Flogoff
                         list.Add(i);
                     }
                 }
-                PacketTypes msgID = e.MsgID;
+                PacketTypes msgID = e.MsgId;
                 if (msgID <= PacketTypes.DoorUse)
                 {
                     if (msgID != PacketTypes.PlayerSpawn && msgID != PacketTypes.DoorUse)
@@ -197,7 +199,7 @@ namespace Flogoff
             }
         }
 
-        protected void flogoff(CommandArgs args)
+        protected void FlogOff(CommandArgs args)
         {
             TSPlayer player = args.Player;
             offline.Add(player.Name);
@@ -219,7 +221,7 @@ namespace Flogoff
             TSPlayer.All.SendMessage(string.Format("{0} left", player.Name), Color.Yellow);
         }
 
-        protected void flogon(CommandArgs args)
+        protected void FlogOn(CommandArgs args)
         {
             TSPlayer player = args.Player;
             player.mute = false;

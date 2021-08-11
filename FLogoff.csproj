@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="OTAPI, Version=1.4.2.3, Culture=neutral, PublicKeyToken=null">
+      <HintPath>DLL\OTAPI.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -42,6 +45,9 @@
       <HintPath>DLL\TerrariaServer.exe</HintPath>
     </Reference>
     <Reference Include="TShockAPI">
+      <HintPath>DLL\TShockAPI.dll</HintPath>
+    </Reference>
+    <Reference Include="TShockAPI, Version=4.5.5.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>DLL\TShockAPI.dll</HintPath>
     </Reference>
   </ItemGroup>

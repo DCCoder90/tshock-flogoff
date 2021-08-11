@@ -1,7 +1,0 @@
-C:\Users\Ernest\gitrepos\tshock-fakelogout-plugin\bin\Debug\FLogoff.dll
-C:\Users\Ernest\gitrepos\tshock-fakelogout-plugin\bin\Debug\FLogoff.pdb
-C:\Users\Ernest\gitrepos\tshock-fakelogout-plugin\bin\Debug\TerrariaServer.exe
-C:\Users\Ernest\gitrepos\tshock-fakelogout-plugin\bin\Debug\TShockAPI.dll
-C:\Users\Ernest\gitrepos\tshock-fakelogout-plugin\obj\Debug\ResolveAssemblyReference.cache
-C:\Users\Ernest\gitrepos\tshock-fakelogout-plugin\obj\Debug\FLogoff.dll
-C:\Users\Ernest\gitrepos\tshock-fakelogout-plugin\obj\Debug\FLogoff.pdb
