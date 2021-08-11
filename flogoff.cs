@@ -1,14 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
 using System.Linq;
 using Terraria;
 using TShockAPI;
-using Hooks;
 using Microsoft.Xna.Framework;
-using OTAPI;
-using Terraria.Localization;
 using TerrariaApi.Server;
 
 namespace Flogoff
@@ -34,8 +29,8 @@ namespace Flogoff
 
         public override void Initialize()
         {
-            Hooks.ServerHooks.Chat += OnChat;
-            Hooks.Net.SendData += OnSendData;
+            ServerApi.Hooks.ServerChat.Register(this,OnServerChat);
+            ServerApi.Hooks.NetSendData.Register(this,OnSendData);
             Commands.ChatCommands.Add(new Command("flogoff", FlogOn, "flogon"));
             Commands.ChatCommands.Add(new Command("flogoff", FlogOff, "flogoff"));
         }
@@ -44,14 +39,14 @@ namespace Flogoff
         {
             if (disposing)
             {
-                Hooks.Net.SendData -= OnSendData;
-                Hooks.ServerHooks.Chat -= OnChat;
+                ServerApi.Hooks.ServerChat.Deregister(this,OnServerChat);
+                ServerApi.Hooks.NetSendData.Deregister(this,OnSendData);
             }
 
             base.Dispose(disposing);
         }
 
-        private void OnSendData(SendDataEventArgs e)
+        private static void OnSendData(SendDataEventArgs e)
         {
             var list = new List<int>();
             for (var i = 0; i < 256; i++)
@@ -71,7 +66,6 @@ namespace Flogoff
                         if (list.Contains(e.ignoreClient) && Offlineindex[e.ignoreClient])
                         {
                             e.Handled = true;
-                            goto IL_D2;
                         }
 
                         goto IL_D2;
@@ -95,7 +89,7 @@ namespace Flogoff
                                         break;
 
                                     case PacketTypes.PlayerMana:
-                                    case PacketTypes.PlayerKillMe:
+                                    //case PacketTypes.PlayerKillMe:
                                         goto IL_D2;
 
                                     default:
@@ -114,22 +108,21 @@ namespace Flogoff
             if (e.number >= 0 && e.number <= 255 && Offlineindex[e.number] && e.MsgId == PacketTypes.PlayerUpdate)
                 e.Handled = true;
         }
-
-        private void OnChat(messageBuffer msg, int who, string message, HandledEventArgs args)
+        
+        private void OnServerChat(ServerChatEventArgs args)
         {
             if (args.Handled) return;
 
-            var player = TShock.Players[msg.whoAmI];
+            var player = TShock.Players[args.Buffer.whoAmI];
 
-            if (message.StartsWith("/tp") || message.StartsWith("/playing"))
+            if (args.Text.StartsWith("/tp") || args.Text.StartsWith("/playing"))
             {
-                if (message.Substring(1, 3) == "tp")
+                if (args.Text.Substring(1, 3) == "tp")
                 {
-                    var words = message.Split();
-                    var cmd = words[0].Substring(1);
+                    var words = args.Text.Split();
                     var tpto = words[1];
 
-                    var result = _offline.Find(delegate(string off) { return off == tpto; });
+                    var result = _offline.Find(off => off == tpto);
 
                     if (!string.IsNullOrEmpty(result))
                     {
@@ -137,17 +130,12 @@ namespace Flogoff
                         player.SendMessage("Invalid player!", Color.Red);
                         return;
                     }
-                    else
-                    {
-                        return;
-                    }
                 }
 
-                if (message.Substring(1, 7) == "playing")
+                if (args.Text.Substring(1, 7) == "playing")
                 {
                     args.Handled = true;
                     var players = TShock.Players.ToList();
-                    var i = 0;
                     foreach (var indPlayer in players)
                     {
                         var result = _offline.Find(off => string.Equals(off, indPlayer.Name, StringComparison.CurrentCultureIgnoreCase));
@@ -155,15 +143,10 @@ namespace Flogoff
                         {
                             players.Remove(indPlayer);
                         }
-                        i++;
                     }
 
                     player.SendMessage($"Current players: {players.Select(x => x.Name)}.", 255, 240, 20);
                 }
-            }
-            else
-            {
-                return;
             }
         }
 
@@ -178,13 +161,13 @@ namespace Flogoff
             //Team Update
             var team = player.TPlayer.team;
             player.TPlayer.team = 0;
-            NetMessage.SendData(45, -1, -1, "", player.Index, 0f, 0f, 0f, 0);
+            NetMessage.SendData(45,number:player.Index);
             player.TPlayer.team = team;
 
             //Player Update
             player.TPlayer.position.X = 0f;
             player.TPlayer.position.Y = 0f;
-            NetMessage.SendData(13, -1, -1, "", player.Index, 0f, 0f, 0f, 0);
+            NetMessage.SendData(13,number:player.Index);
 
             TSPlayer.All.SendMessage($"{player.Name} left", Color.Yellow);
         }
