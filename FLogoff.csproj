@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="OTAPI, Version=1.4.2.3, Culture=neutral, PublicKeyToken=null">
+      <HintPath>DLL\OTAPI.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -44,13 +47,13 @@
     <Reference Include="TShockAPI">
       <HintPath>DLL\TShockAPI.dll</HintPath>
     </Reference>
+    <Reference Include="TShockAPI, Version=4.5.5.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>DLL\TShockAPI.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="flogoff.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Readme.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

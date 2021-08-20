@@ -1,39 +1,25 @@
-﻿﻿using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
+using System.Linq;
 using Terraria;
 using TShockAPI;
-using Hooks;
+using Microsoft.Xna.Framework;
+using TerrariaApi.Server;
 
 namespace Flogoff
 {
-    [APIVersion(1, 11)]
-
+    [ApiVersion(2, 1)]
     public class FLogoff : TerrariaPlugin
     {
-        protected List<string> offline = new List<string>();
-        protected static bool[] offlineindex = new bool[256];
+        private readonly List<string> _offline = new List<string>();
+        private static readonly bool[] Offlineindex = new bool[256];
 
-        public override Version Version
-        {
-            get { return new Version("1.0.9"); }
-        }
+        public override Version Version => new Version("1.0.9");
 
-        public override string Name
-        {
-            get { return "FLogoff"; }
-        }
+        public override string Name => "Flogoff";
+        public override string Author => "DCCoder";
 
-        public override string Author
-        {
-            get { return "Darkvengance aka Sildaekar"; }
-        }
-
-        public override string Description
-        {
-            get { return "Performs a fake logoff"; }
-        }
+        public override string Description => "Performs a fake logoff";
 
         public FLogoff(Main game)
             : base(game)
@@ -43,189 +29,156 @@ namespace Flogoff
 
         public override void Initialize()
         {
-            Hooks.ServerHooks.Chat += OnChat;
-            NetHooks.SendData += OnSendData;
-            Commands.ChatCommands.Add(new Command("flogoff", flogon, "flogon"));
-            Commands.ChatCommands.Add(new Command("flogoff", flogoff, "flogoff"));
+            ServerApi.Hooks.ServerChat.Register(this,OnServerChat);
+            ServerApi.Hooks.NetSendData.Register(this,OnSendData);
+            Commands.ChatCommands.Add(new Command("flogoff", FlogOn, "flogon"));
+            Commands.ChatCommands.Add(new Command("flogoff", FlogOff, "flogoff"));
         }
-
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                Hooks.ServerHooks.Chat -= OnChat;
-                NetHooks.SendData -= OnSendData;
+                ServerApi.Hooks.ServerChat.Deregister(this,OnServerChat);
+                ServerApi.Hooks.NetSendData.Deregister(this,OnSendData);
             }
+
             base.Dispose(disposing);
         }
 
-        public void OnSendData(SendDataEventArgs e)
+        private static void OnSendData(SendDataEventArgs e)
         {
-            try
+            var list = new List<int>();
+            for (var i = 0; i < 256; i++)
+                if (Offlineindex[i])
+                    list.Add(i);
+            var msgId = e.MsgId;
+            if (msgId <= PacketTypes.DoorUse)
             {
-                List<int> list = new List<int>();
-                for (int i = 0; i < 256; i++)
+                if (msgId != PacketTypes.PlayerSpawn && msgId != PacketTypes.DoorUse) goto IL_D2;
+            }
+            else
+            {
+                switch (msgId)
                 {
-                    if (FLogoff.offlineindex[i])
-                    {
-                        list.Add(i);
-                    }
-                }
-                PacketTypes msgID = e.MsgID;
-                if (msgID <= PacketTypes.DoorUse)
-                {
-                    if (msgID != PacketTypes.PlayerSpawn && msgID != PacketTypes.DoorUse)
-                    {
+                    case PacketTypes.ProjectileNew:
+                    case PacketTypes.ProjectileDestroy:
+                        if (list.Contains(e.ignoreClient) && Offlineindex[e.ignoreClient])
+                        {
+                            e.Handled = true;
+                        }
+
                         goto IL_D2;
-                    }
+
+                    case PacketTypes.NpcStrike:
+                        goto IL_D2;
+
+                    default:
+                        switch (msgId)
+                        {
+                            case PacketTypes.EffectHeal:
+                            case PacketTypes.Zones:
+                                break;
+
+                            default:
+                                switch (msgId)
+                                {
+                                    case PacketTypes.PlayerAnimation:
+                                    case PacketTypes.EffectMana:
+                                    case PacketTypes.PlayerTeam:
+                                        break;
+
+                                    case PacketTypes.PlayerMana:
+                                    //case PacketTypes.PlayerKillMe:
+                                        goto IL_D2;
+
+                                    default:
+                                        goto IL_D2;
+                                }
+
+                                break;
+                        }
+
+                        break;
                 }
-                else
-                {
-                    switch (msgID)
-                    {
-                        case PacketTypes.PlayerDamage:
-                            break;
+            }
 
-                        case PacketTypes.ProjectileNew:
-                        case PacketTypes.ProjectileDestroy:
-                            if (list.Contains(e.ignoreClient) && FLogoff.offlineindex[e.ignoreClient])
-                            {
-                                e.Handled = true;
-                                goto IL_D2;
-                            }
-                            goto IL_D2;
-
-                        case PacketTypes.NpcStrike:
-                            goto IL_D2;
-
-                        default:
-                            switch (msgID)
-                            {
-                                case PacketTypes.EffectHeal:
-                                case PacketTypes.Zones:
-                                    break;
-
-                                default:
-                                    switch (msgID)
-                                    {
-                                        case PacketTypes.PlayerAnimation:
-                                        case PacketTypes.EffectMana:
-                                        case PacketTypes.PlayerTeam:
-                                            break;
-
-                                        case PacketTypes.PlayerMana:
-                                        case PacketTypes.PlayerKillMe:
-                                            goto IL_D2;
-
-                                        default:
-                                            goto IL_D2;
-                                    }
-                                    break;
-                            }
-                            break;
-                    }
-                }
-                if (list.Contains(e.number) && FLogoff.offlineindex[e.number])
-                {
-                    e.Handled = true;
-                }
+            if (list.Contains(e.number) && Offlineindex[e.number]) e.Handled = true;
             IL_D2:
-                if (e.number >= 0 && e.number <= 255 && FLogoff.offlineindex[e.number] && e.MsgID == PacketTypes.PlayerUpdate)
-                {
-                    e.Handled = true;
-                }
-            }
-            catch (Exception)
-            {
-            }
+            if (e.number >= 0 && e.number <= 255 && Offlineindex[e.number] && e.MsgId == PacketTypes.PlayerUpdate)
+                e.Handled = true;
         }
-
-        protected void OnChat(messageBuffer msg, int who, string message, HandledEventArgs args)
+        
+        private void OnServerChat(ServerChatEventArgs args)
         {
-            if (args.Handled)
-            {
-                return;
-            }
+            if (args.Handled) return;
 
-            TSPlayer player = TShock.Players[msg.whoAmI];
+            var player = TShock.Players[args.Buffer.whoAmI];
 
-            if (message.StartsWith("/tp") || message.StartsWith("/playing"))
+            if (args.Text.StartsWith("/tp") || args.Text.StartsWith("/playing"))
             {
-                if (message.Substring(1, 3) == "tp")
+                if (args.Text.Substring(1, 3) == "tp")
                 {
+                    var words = args.Text.Split();
+                    var tpto = words[1];
 
-                    string[] words = message.Split();
-                    string cmd = words[0].Substring(1);
-                    string tpto = words[1];
+                    var result = _offline.Find(off => off == tpto);
 
-                    string result = offline.Find(delegate(string off) {return off == tpto; });
-
-                    if (result != null&&result!="")
+                    if (!string.IsNullOrEmpty(result))
                     {
                         args.Handled = true;
                         player.SendMessage("Invalid player!", Color.Red);
                         return;
                     }
-                    else
-                    {
-                        return;
-                    }
                 }
-                if (message.Substring(1, 7) == "playing")
+
+                if (args.Text.Substring(1, 7) == "playing")
                 {
                     args.Handled = true;
-                    string response = TShock.Utils.GetPlayers();
-                    string[] players = response.Split();
-                    int i = 0;
-                    foreach (string playername in players)
+                    var players = TShock.Players.ToList();
+                    foreach (var indPlayer in players)
                     {
-                        string result = offline.Find(delegate(string off) { return off.ToLower() == playername.ToLower(); });
+                        var result = _offline.Find(off => string.Equals(off, indPlayer.Name, StringComparison.CurrentCultureIgnoreCase));
                         if (result != null)
                         {
-                            players[i] = "";
+                            players.Remove(indPlayer);
                         }
-                        i++;
                     }
-                    response = String.Join(" ", players);
-                    player.SendMessage(string.Format("Current players: {0}.", response), 255, 240, 20);
+
+                    player.SendMessage($"Current players: {players.Select(x => x.Name)}.", 255, 240, 20);
                 }
-            }
-            else
-            {
-                return;
             }
         }
 
-        protected void flogoff(CommandArgs args)
+        private void FlogOff(CommandArgs args)
         {
-            TSPlayer player = args.Player;
-            offline.Add(player.Name);
-            offlineindex[player.Index] = true;
+            var player = args.Player;
+            _offline.Add(player.Name);
+            Offlineindex[player.Index] = true;
 
             player.mute = true; //Just for saftey ;)
 
             //Team Update
-            int team = player.TPlayer.team;
+            var team = player.TPlayer.team;
             player.TPlayer.team = 0;
-            NetMessage.SendData(45, -1, -1, "", player.Index, 0f, 0f, 0f, 0);
+            NetMessage.SendData(45,number:player.Index);
             player.TPlayer.team = team;
 
             //Player Update
             player.TPlayer.position.X = 0f;
             player.TPlayer.position.Y = 0f;
-            NetMessage.SendData(13, -1, -1, "", player.Index, 0f, 0f, 0f, 0);
+            NetMessage.SendData(13,number:player.Index);
 
-            TSPlayer.All.SendMessage(string.Format("{0} left", player.Name), Color.Yellow);
+            TSPlayer.All.SendMessage($"{player.Name} left", Color.Yellow);
         }
 
-        protected void flogon(CommandArgs args)
+        private void FlogOn(CommandArgs args)
         {
-            TSPlayer player = args.Player;
+            var player = args.Player;
             player.mute = false;
-            offline.Remove(player.Name);
-            offlineindex[player.Index] = false;
-            TSPlayer.All.SendMessage(string.Format("{0} has joined", player.Name), Color.Yellow);
+            _offline.Remove(player.Name);
+            Offlineindex[player.Index] = false;
+            TSPlayer.All.SendMessage($"{player.Name} has joined", Color.Yellow);
         }
     }
 }
